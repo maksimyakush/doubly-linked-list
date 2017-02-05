@@ -3,8 +3,6 @@ class Node {
         this.data = data;
         this.prev = prev;
         this.next = next;
-        //добавилось свойство index
-        this.index = 0;
     }
 }
 

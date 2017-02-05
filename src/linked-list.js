@@ -9,7 +9,7 @@ class LinkedList {
 
     append(data) {
         //в this._head и this._tail присваивается ссылка на первую ноду
-        if (!this._head) {
+        if (this.length == 0) {
             this._head = new Node(data);
             this._tail = new Node(data, this._head);
             this._head.next = this._tail;
@@ -18,7 +18,6 @@ class LinkedList {
         } else if (this.length == 1) {
             this.length += 1;
             this._tail = new Node (data, this._head);
-            this._tail.index = this.length-1;
             this._head.next = this._tail;
         //в this._tail писваивается ссылка на сл. ноду, устанавливаются связи с предыдущей нодой
         } else if (this.length >= 2) {
@@ -27,7 +26,6 @@ class LinkedList {
             tail.next = this._tail;
             this._tail.prev = tail;
             this.length += 1;
-            this._tail.index = this.length-1;
         }
         return this;
     }
@@ -41,59 +39,68 @@ class LinkedList {
     }
 
     at(index) {
-        if (index == 0) {
-            return this._head.data;
+        let counter = 0;
+        if (index >= this.length)  {
+            throw new Error ("Index exceeded length");
         }
-        //функция рекурсивно сравнивает index со свойством индекс каждой последующей ноды
+        //функция рекурсивно сравнивает index с counter
         let getData = (node) => {
-            if (index == node.index) {
+            if (index == counter) {
                 return node.data;
             } else {
+                counter++;
                 return getData(node.next);
             }
         };
-        return  getData(this._head.next);
+        return  getData(this._head);
     }
 
     insertAt(index, data) {
-        if (index == 0) {
-            return this._head.data;
-        }
-        if (index > 0) {
+        let firstCounter = 0;
+        let secondCounter = 0;
+        if (this.length==0 && index == 0) {
+            this.append(data);
+        } else if (index == 0 && this.length == 1) {
+            this._head = new Node(data);
+            this._head.next = this._tail;
+            this._tail.prev = this._head;
+            this.length += 1;
+        } else  if (index == 0 && this.length > 1) {
+            let head = this._head;
+            this._head = new Node(data);
+            head.prev = this._head;
+            this._head.next = head;
+            this.length +=1;
+        } else if (index >= this.length) {
+            throw new Error ("Index exceeded length");
+        } else {
             //функция ищет ноду, на место которой нужно вставить новую ноду
             let getCurrentNode = (node) => {
-                if (index == node.index){
+                if (index == firstCounter){
                     return node;
                 } else {
+                    firstCounter++;
                     return getCurrentNode(node.next);
                 }
             };
             //функция ищет ноду, предыдущую ранее искомой ноде
             let getPreviousNode = (node) => {
-                if (index == node.index) {
+                if (index == secondCounter) {
                     return node.prev;
                 } else {
+                    secondCounter++;
                     return getPreviousNode(node.next);
                 }
             };
             //создается нода, устанавливаются связи между нодами
-            let nextNode = getCurrentNode(this._head.next);
-            let previousNode = getPreviousNode(this._head.next);
+            let nextNode = getCurrentNode(this._head);
+            let previousNode = getPreviousNode(this._head);
             let newCurrentNode = new Node(data);
             nextNode.prev = newCurrentNode;
             previousNode.next = newCurrentNode;
             newCurrentNode.next = nextNode;
             newCurrentNode.prev = previousNode;
-            newCurrentNode.index = nextNode.index;
             this.length += 1;
-            //функция увеличивает значения свойств index на 1 в каждой ноде после newCurrentNode
-            let changeIndexes = (node) => {
-                if (node.next == null) return;
-                node.next.index = node.next.index + 1;
-
-                return changeIndexes(node.next);
-            };
-            changeIndexes(newCurrentNode);
             return this;
         }
     }
@@ -103,49 +110,63 @@ class LinkedList {
     }
 
     clear() {
-        if(this._head) {
-            this._head.data = null;
-            this._tail.data = null;
-            this.length=0;
-        }
+        this._head.data = null;
+        this._tail.data = null;
+        this.length=0;
         return this;
     }
 
     deleteAt(index) {
-        if (index == 0) {
-            return this.clear();
+        let firstCounter = 0;
+        let secondCounter = 0;
+        if (index == 0 && this.length == 1) {
+            return this;
+        } else if (index == 0 && this.length == 2) {
+            this._head.data = this._tail.data;
+            this._head.next=this._tail;
+            this._tail.prev = this._head;
+            this.length -= 1;
+        } else if (index == 1 && this.length == 2) {
+            this._tail.data = this._head.data;
+            this._tail.prev = this._head;
+            this._head.next = this._tail;
+            this.length -= 1;
+        }  else if (index == 0 && this.length > 2) {
+            let head = this._head;
+            this._head = head.next;
+            this._head.prev = null;
+            this.length -= 1;
+        } else  if (index == this.length-1) {
+            let tail = this._tail;
+            this._tail = tail.prev;
+            this._tail.next = null;
+            this.length -= 1;
+        } else {
+            //функция ищет ноду, предыдущую удаляемой
+            let getPreviousNode = (node) => {
+                if (index == firstCounter) {
+                    return node.prev;
+                } else {
+                    firstCounter++;
+                    return getPreviousNode(node.next);
+                }
+            };
+            //функция ищет ноду, следующую после удаляемой
+            let getNextNode = (node) => {
+                if (index == secondCounter) {
+                    return node.next;
+                } else {
+                    secondCounter++;
+                    return getNextNode(node.next);
+                }
+            };
+            //устанавливаются связи между previousNode и nextNode
+            let previousNode = getPreviousNode(this._head);
+            let nextNode = getNextNode(this._head);
+            previousNode.next = nextNode;
+            nextNode.prev = previousNode;
+            this.length -= 1;
         }
-        //функция ищет ноду, предыдущую удаляемой
-        let getPreviousNode = (node) => {
-            if (index == node.index) {
-                return node.prev;
-            } else {
-                return getPreviousNode(node.next);
-            }
-        };
-        //функция ищет ноду, следующую после удаляемой
-        let getNextNode = (node) => {
-            if (index == node.index) {
-                return node.next;
-            } else {
-                return getNextNode(node.next);
-            }
-        };
-        //устанавливаются связи между previousNode и nextNode
-        let previousNode = getPreviousNode(this._head.next);
-        let nextNode = getNextNode(this._head.next);
-        previousNode.next = nextNode;
-        nextNode.prev = previousNode;
-        //функция уменьшает значения свойства index в каждой ноде после previousNode
-        let changeIndexes = (node) => {
-            if (node.next == null) {
-                return;
-            }
-            node.next.index  -= 1;
-            return changeIndexes(node.next);
-        };
-        changeIndexes(previousNode);
-        this.length -= 1;
         return this;
     }
 
@@ -154,14 +175,14 @@ class LinkedList {
         let newHead = new Node();
         newHead.data = this._tail.data;
         //функция добавляет в новый сисок ноды в обратном порядке
-        let appendInReverseOrder = (tail, head) => {
+        let appendInReverseOrder = (head, tail) => {
             if (!tail) {
                 return;
             }
             head.next = tail.prev;
-            return appendInReverseOrder(tail.prev, head.next);
+            return appendInReverseOrder(head.next, tail.prev);
         };
-        appendInReverseOrder(this._tail, newHead);
+        appendInReverseOrder(newHead, this._tail);
         this._head = null;
         this._tail = null;
         this._head = newHead;
@@ -186,27 +207,20 @@ class LinkedList {
             return turnNextPreviousAsNext(node.next);
         };
         turnNextPreviousAsNext(this._head);
-        //функция упорядочивает индексы
-        let changeIndexes = (node) => {
-            if (node.next==null) return;
-            if (node.next) {
-                node.next.index = node.index + 1;
-            }
-            return changeIndexes(node.next);
-        };
-        changeIndexes(this._head);
         return this;
     }
 
     indexOf(data) {
+        let counter = 0;
         //функция рекурсиво сравнивает data со свойством дата каждой последующей ноды
         let getIndex = (node) => {
             if (node == null) {
                 return -1;
             }
             else if (data == node.data) {
-                return node.index;
+                return counter;
             } else {
+                counter++;
                 return getIndex(node.next);
             }
         };
